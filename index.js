@@ -13,10 +13,9 @@ app.use(express.json());
 let candidates = [];
 
 wss.on('connection', (ws) => {
-  // Send initial state
+  console.log('🔌 New WebSocket connection');
   ws.send(JSON.stringify({ type: 'init', candidates }));
 
-  // Handle incoming messages
   ws.on('message', (message) => {
     const data = JSON.parse(message);
 
@@ -26,14 +25,12 @@ wss.on('connection', (ws) => {
     }
 
     if (data.type === 'delete') {
-      candidates = candidates.filter((c) => c.id !== data.payload.id);
-      broadcast({ type: 'delete', payload: data.payload });
+      candidates = candidates.filter(c => c.id !== data.payload);
+      broadcast({ type: 'delete', payload: { id: data.payload } });
     }
 
     if (data.type === 'update') {
-      candidates = candidates.map((c) =>
-        c.id === data.payload.id ? data.payload : c
-      );
+      candidates = candidates.map(c => (c.id === data.payload.id ? data.payload : c));
       broadcast({ type: 'update', payload: data.payload });
     }
   });
@@ -49,6 +46,7 @@ function broadcast(data) {
 
 app.get('/', (_, res) => res.send('Backend running...'));
 
-server.listen(3001, () => {
-  console.log('WebSocket/REST server running on http://localhost:3001');
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`✅ WebSocket/REST server running on http://localhost:${PORT}`);
 });
